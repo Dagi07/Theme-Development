@@ -1,33 +1,180 @@
 <?php
+/**
+ * sheger functions and definitions
+ *
+ * @link https://developer.wordpress.org/themes/basics/theme-functions/
+ *
+ * @package sheger
+ */
 
-function load_stylesheets()
-{
+if ( ! function_exists( 'sheger_setup' ) ) :
+	/**
+	 * Sets up theme defaults and registers support for various WordPress features.
+	 *
+	 * Note that this function is hooked into the after_setup_theme hook, which
+	 * runs before the init hook. The init hook is too late for some features, such
+	 * as indicating support for post thumbnails.
+	 */
+	function sheger_setup() {
+		/*
+		 * Make theme available for translation.
+		 * Translations can be filed in the /languages/ directory.
+		 * If you're building a theme based on sheger, use a find and replace
+		 * to change 'sheger' to the name of your theme in all the template files.
+		 */
+		load_theme_textdomain( 'sheger', get_template_directory() . '/languages' );
 
-    wp_register_style('bootstrap', get_template_directory_uri(). '/assets/css/bootstrap.min.css',
-    array(), false, all);
-    wp_enqueue_style('bootstrap');
+		// Add default posts and comments RSS feed links to head.
+		add_theme_support( 'automatic-feed-links' );
 
-    wp_register_style('style', get_template_directory_uri(). '/style.css',
-    array(), false, all);
-    wp_enqueue_style('style');
+		/*
+		 * Let WordPress manage the document title.
+		 * By adding theme support, we declare that this theme does not use a
+		 * hard-coded <title> tag in the document head, and expect WordPress to
+		 * provide it for us.
+		 */
+		add_theme_support( 'title-tag' );
 
+		/*
+		 * Enable support for Post Thumbnails on posts and pages.
+		 *
+		 * @link https://developer.wordpress.org/themes/functionality/featured-images-post-thumbnails/
+		 */
+		add_theme_support( 'post-thumbnails' );
+
+		// This theme uses wp_nav_menu() in one location.
+		register_nav_menus( array(
+			'primary' => esc_html__( 'Primary', 'sheger' ),
+		) );
+
+		/*
+		 * Switch default core markup for search form, comment form, and comments
+		 * to output valid HTML5.
+		 */
+		add_theme_support( 'html5', array(
+			'search-form',
+			'comment-form',
+			'comment-list',
+			'gallery',
+			'caption',
+		) );
+
+		// Set up the WordPress core custom background feature.
+		add_theme_support( 'custom-background', apply_filters( 'sheger_custom_background_args', array(
+			'default-color' => 'ffffff',
+			'default-image' => '',
+		) ) );
+
+		// Add theme support for selective refresh for widgets.
+		add_theme_support( 'customize-selective-refresh-widgets' );
+		
+		/**
+		 * Add support for core custom logo.
+		 *
+		 * @link https://codex.wordpress.org/Theme_Logo
+		 */
+		add_theme_support( 'custom-logo', array(
+			'height'      => 250,
+			'width'       => 250,
+			'flex-width'  => true,
+			'flex-height' => true,
+		) );
+	}
+endif;
+add_action( 'after_setup_theme', 'sheger_setup' );
+
+
+function sheger_add_editor_style (){
+	add_editor_style('dist/css/editor-style.css');
+} 
+add_action('admin_init','sheger_add_editor_style');
+
+/**
+ * Set the content width in pixels, based on the theme's design and stylesheet.
+ *
+ * Priority 0 to make it available to lower priority callbacks.
+ *
+ * @global int $content_width
+ */
+function sheger_content_width() {
+	// This variable is intended to be overruled from themes.
+	// Open WPCS issue: {@link https://github.com/WordPress-Coding-Standards/WordPress-Coding-Standards/issues/1043}.
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+	$GLOBALS['content_width'] = apply_filters( 'sheger_content_width', 1140 );
 }
-add_action('wp_enqueue_scripts', load_stylesheets);
+add_action( 'after_setup_theme', 'sheger_content_width', 0 );
 
-function include_jquery()
-{
 
-    wp_deregister_script('jquery');
-    wp_enqueue_script('jquery', get_template_directory_uri() . '/assets/js/jquery-3.6.0.min.js', '', 1, true);
+/**
+ * Enqueue scripts and styles.
+ */
+function sheger_scripts() {
+	wp_enqueue_style('sheger-bs-css',get_template_directory_uri() . '/assets/css/bootstrap.min.css');
 
-    add_action('wp_enqueue_scripts', 'jquery');
+	wp_enqueue_style('sheger-fontawesome',get_template_directory_uri() . '/assets/font/css/font-awesome.min.css');
+
+	wp_enqueue_style( 'sheger-style', get_stylesheet_uri() );
+
+	wp_enqueue_script('popper',get_template_directory_uri() . '/assets/js/popper.min.js', array(), '20170115',true);
+	wp_enqueue_script('sheger-tether', get_template_directory_uri() . '/assets/js/tether.min.js', array(), '20170115',true);
+
+	wp_enqueue_script('sheger-bootstrap', get_template_directory_uri() . '/assets/js/bootstrap.min.js', array('jquery'), '20170115',true);
+
+	wp_enqueue_script('sheger-bootstrap-hover', get_template_directory_uri() . '/assets/js/bootstrap-hover.js', array('jquery'), '20170115',true);	
+
+
+	wp_enqueue_script( 'sheger-skip-link-focus-fix', get_template_directory_uri() . '/js/skip-link-focus-fix.js', array(), '20151215', true );
+
+	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
+		wp_enqueue_script( 'comment-reply' );
+	}
 }
-add_action('wp_enqueue_scripts', 'include_jquery');
+add_action( 'wp_enqueue_scripts', 'sheger_scripts' );
 
 
-function loadjs()
-{
-    wp_register_script('customjs', get_template_directory_uri() . '/assets/js/scripts.js', '', 1, true);
-    wp_enqueue_script('customjs');
+
+function new_excerpt_more($more) {
+	global $post;
+ 	return '<a class="moretag" href="'. get_permalink($post->ID) . '"> Read More...</a>';
 }
-add_action('wp_enqueue_scripts', 'loadjs');
+add_filter('excerpt_more', 'new_excerpt_more');
+/**
+ * Implement the Custom Header feature.
+ */
+require get_template_directory() . '/inc/custom-header.php';
+
+
+
+/**
+ * Custom template tags for this theme.
+ */
+require get_template_directory() . '/inc/template-tags.php';
+
+/**
+ * Functions which enhance the theme by hooking into WordPress.
+ */
+require get_template_directory() . '/inc/template-functions.php';
+
+/**
+ * Customizer additions.
+ */
+require get_template_directory() . '/inc/customizer.php';
+
+
+/**
+ * widgets additions.
+ */
+require get_template_directory() . '/inc/widgets.php';
+
+/**
+ * bootstrap nav-walker additions.
+ */
+require get_template_directory() . '/inc/bootstrap-wp-navwalker.php';
+
+/**
+ * Load Jetpack compatibility file.
+ */
+if ( defined( 'JETPACK__VERSION' ) ) {
+	require get_template_directory() . '/inc/jetpack.php';
+}
+
